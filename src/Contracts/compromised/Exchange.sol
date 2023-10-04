@@ -41,6 +41,7 @@ contract Exchange is ReentrancyGuard {
 
         uint256 tokenId = token.safeMint(msg.sender);
 
+        // @audit possible exploit?
         payable(msg.sender).sendValue(amountPaidInWei - currentPriceInWei);
 
         emit TokenBought(msg.sender, tokenId, currentPriceInWei);
@@ -55,6 +56,7 @@ contract Exchange is ReentrancyGuard {
         }
 
         // Price should be in [wei / NFT]
+        // @audit need to expoit the price here to be extreemly high
         uint256 currentPriceInWei = oracle.getMedianPrice(token.symbol());
         if (address(this).balance < currentPriceInWei) {
             revert NotEnoughETHInBalance();

@@ -62,6 +62,7 @@ contract TrustfulOracle is AccessControlEnumerable {
         renounceRole(INITIALIZER_ROLE, msg.sender);
     }
 
+    // @audit can we manipulate?
     function postPrice(string calldata symbol, uint256 newPrice) external onlyTrustedSource {
         _setPrice(msg.sender, symbol, newPrice);
     }

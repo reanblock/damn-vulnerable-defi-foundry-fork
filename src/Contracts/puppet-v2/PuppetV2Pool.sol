@@ -46,6 +46,7 @@ contract PuppetV2Pool {
         }
 
         // Calculate how much WETH the user must deposit
+        // @audit can we manipulate this price?
         uint256 depositOfWETHRequired = calculateDepositOfWETHRequired(borrowAmount);
 
         // Take the WETH

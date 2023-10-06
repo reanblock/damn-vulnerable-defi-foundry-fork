@@ -64,6 +64,7 @@ contract FreeRiderNFTMarketplace is ReentrancyGuard {
         uint256 priceToPay = offers[tokenId];
         require(priceToPay > 0, "Token is not being offered");
 
+        // @audit only need the min for one NFT since its checking on each NFT
         require(msg.value >= priceToPay, "Amount paid is not enough");
 
         amountOfOffers--;
@@ -72,6 +73,7 @@ contract FreeRiderNFTMarketplace is ReentrancyGuard {
         token.safeTransferFrom(token.ownerOf(tokenId), msg.sender, tokenId);
 
         // pay seller
+        // @audit this is going to repay the buyer since at this point the ownership has already been transfered!
         payable(token.ownerOf(tokenId)).sendValue(priceToPay);
 
         emit NFTBought(msg.sender, tokenId, priceToPay);

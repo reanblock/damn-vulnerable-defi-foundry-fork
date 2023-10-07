@@ -102,6 +102,7 @@ contract ClimberTimelock is AccessControl {
             targets[i].functionCallWithValue(dataElements[i], values[i]);
         }
 
+        // @audit should this check be before the above loop?
         require(getOperationState(id) == OperationState.ReadyForExecution);
         operations[id].executed = true;
     }

@@ -6,14 +6,14 @@ import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/Owna
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 
-import {ClimberTimelock} from "./ClimberTimelock.sol";
+import {ClimberTimelock} from "../../../src/Contracts/climber/ClimberTimelock.sol";
 
 /**
  * @title ClimberVault
  * @dev To be deployed behind a proxy following the UUPS pattern. Upgrades are to be triggered by the owner.
  * @author Damn Vulnerable DeFi (https://damnvulnerabledefi.xyz)
  */
-contract ClimberVault is Initializable, OwnableUpgradeable, UUPSUpgradeable {
+contract AttackVault is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     uint256 public constant WITHDRAWAL_LIMIT = 1 ether;
     uint256 public constant WAITING_PERIOD = 15 days;
 
@@ -38,7 +38,7 @@ contract ClimberVault is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         // Deploy timelock and transfer ownership to it
         transferOwnership(address(new ClimberTimelock(admin, proposer)));
 
-        _setSweeper(sweeper);
+        setSweeper(sweeper);
         _setLastWithdrawal(block.timestamp);
         _lastWithdrawalTimestamp = block.timestamp;
     }
@@ -65,7 +65,7 @@ contract ClimberVault is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         return _sweeper;
     }
 
-    function _setSweeper(address newSweeper) internal {
+    function setSweeper(address newSweeper) public {
         _sweeper = newSweeper;
     }
 

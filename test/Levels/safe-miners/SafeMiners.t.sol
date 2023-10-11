@@ -41,7 +41,8 @@ contract SafeMiners is Test {
         /**
          * EXPLOIT START *
          */
-
+        // deploy a new gnosis proxy ensuring the address is 0x79658d35aB5c38B6b988C23D02e0410A380B8D5c
+        // claim ownership of the wallet and tranfer funds out
         /**
          * EXPLOIT END *
          */
